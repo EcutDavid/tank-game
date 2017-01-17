@@ -1,10 +1,10 @@
 const BOARD_WIDTH = 400;
 const BOARD_HEIGHT = 400;
-const PADDLE_WIDTH = 10;
-const PADDLE_HEIGHT = 60;
+const TANK_WIDTH = 10;
+const TANK_HEIGHT = 60;
 const PADDLE_MARGIN_X = 10;
-const BALL_RADIUS = 10;
-const PADDLE_SPEED = 11;
+const BULLET_RADIUS = 10;
+const TANK_SPEED = 11;
 
 const CLIENT_SIDE_DEFAULT = {
   board: {
@@ -12,21 +12,21 @@ const CLIENT_SIDE_DEFAULT = {
     height: BOARD_HEIGHT
   },
   paddle: {
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT
+    width: TANK_WIDTH,
+    height: TANK_HEIGHT
   },
   ball: {
-    radius: BALL_RADIUS
+    radius: BULLET_RADIUS
   }
 };
 
 module.exports = {
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  PADDLE_WIDTH,
-  PADDLE_HEIGHT,
+  TANK_WIDTH,
+  TANK_HEIGHT,
   PADDLE_MARGIN_X,
-  BALL_RADIUS,
+  BULLET_RADIUS,
   CLIENT_SIDE_DEFAULT,
-  PADDLE_SPEED
+  TANK_SPEED
 };

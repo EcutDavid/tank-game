@@ -17,14 +17,19 @@ export default class Header extends React.Component {
       this.setState({boardInfo});
     });
 
+    setInterval(() => {
+      this.props.socket.emit('emitBullet', {posX: 100, posY: 100, tankID: 1});
+    }, 5000);
+
     this.props.socket.on('update', gameInfo => {
       this.setState({gameInfo});
     });
   }
 
   render() {
-    //const { boardInfo, gameInfo } = this.state;
-    return (
+    const { boardInfo, gameInfo } = this.state;
+
+    return (boardInfo && gameInfo) ? (
         <svg
             className='game-board'
             width="500"
@@ -45,14 +50,21 @@ export default class Header extends React.Component {
                transform="rotate(0 75 75)"
                fill="#f80"
              />
-             <rect
-                x="65"
-                y="200"
-                width="20"
-                height="20"
-                fill="#f80"
-             />
+           {
+             gameInfo.bulletList && gameInfo.bulletList.map((bullet, i) => (
+               <rect
+                 x={bullet.posX}
+                 y={bullet.posY}
+                 width="20"
+                 height="20"
+                 fill="#f80"
+                 key={i}
+               />
+             ))
+           }
         </svg>
+    ) : (
+      <span />
     );
   }
 

@@ -1,33 +1,37 @@
 const {
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  PADDLE_WIDTH,
-  PADDLE_HEIGHT,
-  PADDLE_MARGIN_X,
-  BALL_RADIUS,
-  PADDLE_SPEED
+  TANK_WIDTH,
+  TANK_HEIGHT,
+  BULLET_RADIUS,
+  TANK_SPEED
 } = require('./constants');
+const _ = require('lodash');
+const Bullet = require('./bullet');
+const Tank = require('./tank');
+const uuid = require('uuid');
 
 class GameController {
   constructor() {
-    this.resetBall();
-    this.resetPaddle();
-    this.user1 = { isUp: false, isDown: false, userID: undefined };
-    this.user2 = { isUp: false, isDown: false, userID: undefined };
+    this.bulletTable = {};
+    this.tanks = [new Tank(true), new Tank(false)];
+    this.user1 = { dir: 180, userID: undefined, isMoving: false };
+    this.user2 = { dir: 180, userID: undefined, isMoving: false };
   }
 
   getGameInfo() {
     return {
-      ball: {
-        posX: this.ball.posX,
-        posY: this.ball.posY
-      },
-      paddles: this.paddles,
+      tankList: this.tanks,
+      bulletList: _.values(this.bulletTable),
       userInfo: {
         user1: {hasPlayer: !!this.user1.userID},
         user2: {hasPlayer: !!this.user2.userID}
       }
     };
+  }
+
+  addBullet(bulletInfo) {
+    this.bulletTable[uuid.v4()] = new Bullet(bulletInfo);
   }
 
   checkIsUsersReady() {
@@ -42,97 +46,40 @@ class GameController {
   }
 
   removeUser(id) {
-    [this.user1, this.user2].forEach((d, i) => {
+    [this.user1, this.user2].forEach(d => {
       if (d.userID === id) {
         d.userID = undefined;
-        this.paddles[i].isDown = false;
-        this.paddles[i].isUp = false;
       }
     });
-  }
-
-  setPaddleDir(userID, dir) {
-    [this.user1, this.user2].forEach((d, i) => {
-      if (d.userID === userID) {
-        this.paddles[i].isDown = dir === 'down';
-        this.paddles[i].isUp =  dir === 'up';
-      }
-    });
-  }
-
-  resetBall() {
-    this.ball = {
-      posX: BOARD_WIDTH / 2,
-      posY: BOARD_HEIGHT / 2,
-      speedX: (4 + Math.random() * 4) * (Math.random() > 0.5 ? 1 : -1),
-      speedY: (4 + Math.random() * 4) * (Math.random() > 0.5 ? 1 : -1)
-    };
-  }
-
-  resetPaddle() {
-    this.paddles = [{
-      posX: PADDLE_MARGIN_X,
-      posY: (BOARD_HEIGHT - PADDLE_HEIGHT) / 2,
-      isUp: false,
-      isDown: false,
-      isLeft: true
-    }, {
-      posX: BOARD_WIDTH - PADDLE_WIDTH - PADDLE_MARGIN_X,
-      posY: (BOARD_HEIGHT - PADDLE_HEIGHT) / 2,
-      isUp: false,
-      isDown: false,
-      isLeft: false
-    }];
   }
 
   update() {
-    if (this.checkIsUsersReady()) {
-      this.ball.posX += this.ball.speedX;
-      this.ball.posY += this.ball.speedY;
-    }
+    // if (this.checkIsUsersReady()) {
+      _.values(this.bulletTable).forEach(d => {
+        d.posX += d.speedX / 10;
+        d.posY += d.speedY / 10;
+      });
+    // }
 
-    if (this.ball.posX < -BALL_RADIUS) {
-      this.resetBall();
-    }
-    if (this.ball.posX > (BOARD_WIDTH + BALL_RADIUS)) {
-      this.resetBall();
-    }
-
-    if (this.ball.posY < BALL_RADIUS) {
-      this.ball.posY = BALL_RADIUS;
-      this.ball.speedY *= -1;
-    }
-    if (this.ball.posY > (BOARD_HEIGHT - BALL_RADIUS)) {
-      this.ball.posY = BOARD_WIDTH - BALL_RADIUS;
-      this.ball.speedY *= -1;
-    }
-
-    this.paddles.forEach((d, i) => {
-      d.posY += d.isDown ? PADDLE_SPEED : 0;
-      d.posY -= d.isUp ? PADDLE_SPEED : 0;
-
-      if (d.posY < 0) {
-        d.posY = 0;
+    // delete bullets out of screen
+    Object.keys(this.bulletTable).forEach(key => {
+      const d = this.bulletTable[key];
+      let shouldDelete = false;
+      if ((d.posY < -BULLET_RADIUS) || (d.posX < -BULLET_RADIUS)) {
+        shouldDelete = true;
       }
-
-      if (d.posY > (BOARD_HEIGHT - PADDLE_HEIGHT)) {
-        d.posY = BOARD_HEIGHT - PADDLE_HEIGHT;
+      if ((d.posY > (BOARD_HEIGHT + BULLET_RADIUS)) || (d.posY > (BOARD_WIDTH + BULLET_RADIUS))) {
+        shouldDelete = true;
       }
+      if (shouldDelete) {
+        delete this.bulletTable[key];
+      }
+    });
 
-      if (((d.posY - BALL_RADIUS) < this.ball.posY) &&
-        ((d.posY + PADDLE_HEIGHT + BALL_RADIUS) > this.ball.posY)) {
-          // If paddle is on left side, then the collision panel should be d.x + paddleWidth
-          if (d.isLeft) {
-            if ((d.posX + PADDLE_WIDTH + BALL_RADIUS) > this.ball.posX) {
-              this.ball.posX = (d.posX + PADDLE_WIDTH + BALL_RADIUS);
-              this.ball.speedX *= -1;
-            }
-          } else {
-            if ((d.posX - BALL_RADIUS) < this.ball.posX) {
-              this.ball.posX = d.posX - BALL_RADIUS;
-              this.ball.speedX *= -1;
-            }
-          }
+    this.tanks.forEach(d => {
+      if (d.isMoving) {
+        d.posY += Math.cos(Math.PI / 180 * d.dir) * TANK_SPEED;
+        d.posX += Math.sin(Math.PI / 180 * d.dir) * TANK_SPEED;
       }
     });
   }

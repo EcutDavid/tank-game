@@ -8,6 +8,7 @@ console.log('💻 listening on 5000');
 setInterval(function () {
   gameController.update();
   io.emit('update', gameController.getGameInfo());
+  // 60 fps
 }, 1000 / 60);
 
 io.on('connection', socket => {
@@ -20,8 +21,16 @@ io.on('connection', socket => {
     gameController.setUser(socket.id, isUser1);
   });
 
+  socket.on('userRequest', isUser1 => {
+    gameController.setUser(socket.id, isUser1);
+  });
+
   socket.on('changeDir', dir => {
-    gameController.setPaddleDir(socket.id, dir);
+    // gameController.setPaddleDir(socket.id, dir);
+  });
+
+  socket.on('emitBullet', bulletInfo => {
+    gameController.addBullet(bulletInfo);
   });
 
   socket.on('disconnect', () => {
